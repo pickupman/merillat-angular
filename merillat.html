@@ -76,36 +76,43 @@
 
       var doorsApp = angular.module('doorsApp', ['myFilters', 'ui.bootstrap']);
 
-      doorsApp.controller('DoorListCtrl', function($scope, $http, $timeout, filterFilter) {
+      doorsApp.controller('DoorListCtrl', function($scope, $http, $timeout, filterFilter, $filter) {
         //$scope.currentPage = 0;
         $scope.entryLimit = 24;
         $scope.currentPage = 1; //current page
         $scope.maxSize = 5; //pagination max size
 
+        $scope.noOfPages = function() {
+          // return length of filtered result when defined
+          if (typeof $scope.filtered != 'undefined') {
+            return Math.ceil($scope.filtered.length / $scope.entryLimit);
+          }
+          // return length of doors object if filtered has not been defined yet
+          if (typeof $scope.filtered == 'undefined' && typeof $scope.doors != 'undefined') {
+            return Math.ceil($scope.doors.length / $scope.entryLimit);
+          }
+          // Send 1 to initialize the pagination, correct page number will be set
+          // when ajax call is completed.
+          return 1;
+
+        }
+
         $http.get('merillat-images.php').success(function(data){
           $scope.doors = data;
           $scope.totalItems = data.length;
-          $scope.noOfPages = Math.ceil($scope.doors.length / $scope.entryLimit);
+          // Initialize noOfPages now that we have data
+          $scope.noOfPages();
         });
-
-        $scope.change = function() {
-            $scope.currentPage = 1;
-            $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
-          //console.log($scope.noOfPages);
-        };
 
         $scope.$watch('search', function(newValue, oldValue) {
             $timeout(function(){
                 $scope.currentPage = 1;
-                $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
-                //console.log($scope.noOfPages);
             }, 10);
         });
 
         $scope.$watch('doorName', function(newValue, oldValue) {
             $timeout(function(){
               $scope.currentPage = 1;
-              $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
             }, 10);
 
         });
@@ -124,7 +131,7 @@
       <hr>
       <h1>{{ yourName }}</h1>
 
-      <pagination data-boundary-links="true" data-num-pages="noOfPages" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
+      <pagination data-boundary-links="true" data-num-pages="noOfPages()" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
       <br class="clearfix">
       <div class="container">
         <div class="row">
@@ -141,7 +148,7 @@
       <button ng-disabled="currentPage >= data.length/pageSize - 1" ng-click="currentPage=currentPage+1">Next</button>-->
       <p>Found {{filtered.length}} doors matching that criteria.</p>
 
-      <pagination data-boundary-links="true" data-num-pages="noOfPages" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
+      <pagination data-boundary-links="true" data-num-pages="noOfPages()" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
 
     </div>
   </body>
