@@ -1,0 +1,148 @@
+<!doctype html>
+<html ng-app="doorsApp">
+  <head>
+    <title>Merillat Door Selections</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.min.js"></script>
+    <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.2.0.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+      .pagination ul {
+        list-style-type: none;
+
+      }
+      .pagination ul li {
+        float: left;
+      }
+      .pagination ul li a {
+        float: left;
+        padding: 4px 12px;
+        line-height: 20px;
+        text-decoration: none;
+        background-color: #ffffff;
+        border: 1px solid #dddddd;
+        border-left-width: 0;
+        cursor: pointer;
+      }
+      .pagination li.active a {
+        background: #eee;
+      }
+      .pagination ul>li:first-child>a {
+        border-left: 1px solid rgb(221, 221, 221);
+      }
+    </style>
+    <script type="text/javascript">
+      jQuery(document).ready(function($){
+
+      });
+      angular.module('myFilters', []).
+        filter('byspecies', function () {
+            return function (doors, species) {
+
+                var items = {
+                    species: species,
+                    out: []
+                };
+                if (typeof species != 'undefined') {
+                  angular.forEach(doors, function (value, key) {
+                    if (this.species[value.species] === true) {
+                        this.out.push(value);
+                    }
+                  }, items);
+
+                  // If there is no result then return them all
+                  return (items.out.length > 0) ? items.out : doors;
+                } else {
+                  return doors;
+                }
+            };
+        }).
+        filter('capitalize', function() {
+         return function(input, scope) {
+           if (input!=null)
+             input = input.toLowerCase();
+           return input.substring(0,1).toUpperCase()+input.substring(1);
+         }
+        }).
+        filter('startFrom', function() {
+            return function(input, start) {
+                start = +start; //parse to int
+                if (typeof input != 'undefined')
+                  return input.slice(start);
+                else
+                  return input;
+            }
+        });
+
+      var doorsApp = angular.module('doorsApp', ['myFilters', 'ui.bootstrap']);
+
+      doorsApp.controller('DoorListCtrl', function($scope, $http, $timeout, filterFilter) {
+        //$scope.currentPage = 0;
+        $scope.entryLimit = 24;
+        $scope.currentPage = 1; //current page
+        $scope.maxSize = 5; //pagination max size
+
+        $http.get('merillat-images.php').success(function(data){
+          $scope.doors = data;
+          $scope.totalItems = data.length;
+          $scope.noOfPages = Math.ceil($scope.doors.length / $scope.entryLimit);
+        });
+
+        $scope.change = function() {
+            $scope.currentPage = 1;
+            $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
+          //console.log($scope.noOfPages);
+        };
+
+        $scope.$watch('search', function(newValue, oldValue) {
+            $timeout(function(){
+                $scope.currentPage = 1;
+                $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
+                //console.log($scope.noOfPages);
+            }, 10);
+        });
+
+        $scope.$watch('doorName', function(newValue, oldValue) {
+            $timeout(function(){
+              $scope.currentPage = 1;
+              $scope.noOfPages = Math.ceil($scope.filtered.length / $scope.entryLimit);
+            }, 10);
+
+        });
+      });
+
+    </script>
+  </head>
+  <body ng-controller="DoorListCtrl">
+    <div>
+      <label>Name:</label>
+      <input type="text" ng-model="doorName" placeholder="Enter a name here">
+      <input type="checkbox" name="species[]" ng-change="change()" ng-model="search.maple"/> Maple
+      <input type="checkbox" name="species[]" ng-change="change()" ng-model="search.oak" /> Oak
+      <input type="checkbox" name="species[]" ng-change="change()" ng-model="search.cherry" /> Cherry
+      <input type="checkbox" name="species[]" ng-change="change()" ng-model="search.hickory" /> Hickory
+      <hr>
+      <h1>{{ yourName }}</h1>
+
+      <pagination data-boundary-links="true" data-num-pages="noOfPages" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
+      <br class="clearfix">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-3" ng-repeat="door in filtered = (doors | byspecies: search | filter: doorName ) | startFrom:(currentPage-1)*entryLimit | limitTo: entryLimit">
+            <img ng-src="doors/{{ door.image }}" width="100" height="200"/><br/>
+            <p style="width:100px;height:20px;overflow:hidden;">{{ door.doors }} {{ door.species | capitalize }} {{ door.finish | capitalize }}
+          </div>
+        </div>
+      </div>
+
+<!---
+      <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">Previous</button>
+       {{ currentPage + 1 }} / {{ noOfPages }}
+      <button ng-disabled="currentPage >= data.length/pageSize - 1" ng-click="currentPage=currentPage+1">Next</button>-->
+      <p>Found {{filtered.length}} doors matching that criteria.</p>
+
+      <pagination data-boundary-links="true" data-num-pages="noOfPages" data-current-page="currentPage" max-size="maxSize" class="pagination-small" data-previous-text="&laquo;" data-next-text="&raquo;"></pagination>
+
+    </div>
+  </body>
+</html>
