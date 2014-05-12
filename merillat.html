@@ -76,7 +76,7 @@
 
       var doorsApp = angular.module('doorsApp', ['myFilters', 'ui.bootstrap']);
 
-      doorsApp.controller('DoorListCtrl', function($scope, $http, $timeout, filterFilter, $filter) {
+      doorsApp.controller('DoorListCtrl', function($scope, $http, $timeout) {
         //$scope.currentPage = 0;
         $scope.entryLimit = 24;
         $scope.currentPage = 1; //current page
